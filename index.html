@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ID Card Redact & Watermark - Prevent Identity Theft Offline</title>
+  <meta name="description" content="Free open-source client-side tool to redact sensitive fields and add anti-theft security watermarks to ID cards, passports, and driver licenses. 100% private, zero uploads.">
+  <meta name="keywords" content="id card watermark, redact id card, passport watermark, prevent identity theft, mosaic id number, privacy watermark generator">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="ID Card Redact & Anti-Theft Watermark - Free & Open Source">
+  <meta property="og:description" content="Add anti-misuse watermarks and redact sensitive numbers on IDs, passports, and utility bills. Runs 100% locally in your browser.">
+  <meta property="og:type" content="website">
+
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --surface: #ffffff;
+      --bg: #f8fafc;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --radius: 12px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 6px 18px rgba(15,23,42,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 4px 10px rgba(2,132,199,0.25);
+    }
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      font-size: 0.72rem;
+      background: #ecfdf5;
+      color: #059669;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid #a7f3d0;
+      margin-left: 0.25rem;
+    }
+    .nav-btn-dopic {
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: white;
+      box-shadow: 0 3px 8px rgba(37,99,235,0.25);
+      border: 1px solid transparent;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+    .nav-btn-dopic:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(37,99,235,0.35);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Privacy Banner */
+    .privacy-callout {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .privacy-text {
+      font-size: 0.88rem;
+      color: #166534;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Dropzone */
+    .dropzone-card {
+      background: white;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 3.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+    .dropzone-card:hover {
+      border-color: var(--primary);
+      background: #f8faff;
+    }
+    .btn-upload {
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.75rem 1.8rem;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(2,132,199,0.25);
+      transition: all 0.15s;
+    }
+    .btn-upload:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Workspace */
+    .workspace-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .workspace-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Canvas Stage */
+    .stage-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .stage-header {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      background: #fafbfc;
+    }
+    .stage-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .preview-board {
+      min-height: 440px;
+      max-height: 620px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 1.5rem;
+      position: relative;
+      background: #f1f5f9;
+      user-select: none;
+    }
+    .canvas-wrapper {
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border-radius: 6px;
+      cursor: crosshair;
+    }
+    #idCanvas {
+      display: block;
+      max-width: 100%;
+      border-radius: 6px;
+    }
+
+    /* Sidebar Controls */
+    .controls-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .control-group-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .preset-pill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .preset-pill {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .preset-pill:hover {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+      color: #0369a1;
+    }
+    .preset-pill.active {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: white;
+    }
+
+    .input-text {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #0f172a;
+      outline: none;
+    }
+    .input-text:focus {
+      border-color: var(--primary);
+    }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--primary);
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      cursor: pointer;
+    }
+
+    /* Redaction Tool Selector */
+    .tool-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+    .tool-btn {
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .tool-btn.active {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: white;
+    }
+
+    /* Export buttons */
+    .btn-download-primary {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+      border: none;
+      padding: 0.85rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(2,132,199,0.25);
+      transition: all 0.15s;
+    }
+    .btn-download-primary:hover {
+      transform: translateY(-1px);
+    }
+    .btn-copy-secondary {
+      background: #f8fafc;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      padding: 0.65rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.15s;
+    }
+
+    /* Footer */
+    footer {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.25rem;
+      margin-top: 3rem;
+      text-align: center;
+    }
+    .footer-powered a {
+      color: #0284c7;
+      font-weight: 700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="brand-title">ID Card Redact & Watermark</span>
+          <span class="brand-badge">100% Offline</span>
+        </div>
+      </a>
+
+      <div>
+        <a href="https://dopic.app" target="_blank" rel="noopener" class="nav-btn-dopic">
+          <span>More Free Tools on Dopic</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="privacy-callout">
+      <div class="privacy-text">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span><strong>100% In-Browser Privacy:</strong> Passports, IDs, and licenses are processed strictly inside your device. No data is sent to any server.</span>
+      </div>
+      <div>
+        <button type="button" class="preset-pill" onclick="loadDemoID()">Try Sample ID Card</button>
+      </div>
+    </div>
+
+    <input type="file" id="fileUpload" accept="image/*" style="display:none;">
+
+    <section class="dropzone-card" id="dropzoneCard" onclick="triggerUpload()">
+      <h2 style="font-size:1.35rem; font-weight:700; margin-bottom:0.4rem;">Drop your ID, Passport, or License here</h2>
+      <p style="color:var(--text-muted); font-size:0.92rem; margin-bottom:1.5rem;">Supports ID Cards, Passports, Driver Licenses, Utility Bills (PNG, JPG, WebP)</p>
+      <button type="button" class="btn-upload" onclick="event.stopPropagation(); triggerUpload();">
+        Select ID Image
+      </button>
+      <div style="margin-top:1.5rem;">
+        <button type="button" class="preset-pill" onclick="event.stopPropagation(); loadDemoID();">👤 Load Sample Driver License Demo</button>
+      </div>
+    </section>
+
+    <!-- Workspace -->
+    <section class="workspace-layout" id="workspaceLayout" style="display:none;">
+      
+      <!-- Stage -->
+      <div class="stage-card">
+        <div class="stage-header">
+          <span class="stage-title">Protected Document Preview</span>
+          <div style="display:flex; gap:0.5rem;">
+            <button type="button" class="preset-pill" onclick="undoRedaction()">Undo Mask</button>
+            <button type="button" class="preset-pill" onclick="clearRedactions()">Clear All Masks</button>
+            <button type="button" class="preset-pill" onclick="triggerUpload()">New Image</button>
+          </div>
+        </div>
+
+        <div class="preview-board">
+          <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="idCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-card">
+        
+        <!-- Mask Tool -->
+        <div>
+          <div class="control-group-title">
+            <span>Redaction Tool (Drag on image)</span>
+          </div>
+          <div class="tool-selector-grid">
+            <button type="button" class="tool-btn active" id="btnToolBlack" onclick="setRedactType('black')">⬛ Black Bar</button>
+            <button type="button" class="tool-btn" id="btnToolMosaic" onclick="setRedactType('mosaic')">▦ Mosaic</button>
+            <button type="button" class="tool-btn" id="btnToolBlur" onclick="setRedactType('blur')">🌫️ Blur</button>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Click & drag on the ID to hide ID number, birthday, or address.</p>
+        </div>
+
+        <!-- Watermark Presets -->
+        <div>
+          <div class="control-group-title">
+            <span>Anti-Misuse Watermark Preset</span>
+          </div>
+          <div class="preset-pill-list">
+            <button type="button" class="preset-pill active" onclick="setWatermarkPreset('FOR IDENTITY VERIFICATION ONLY - VOID FOR ANY OTHER PURPOSE', this)">
+              🔒 For Identity Verification Only
+            </button>
+            <button type="button" class="preset-pill" onclick="setWatermarkPreset('FOR RENTAL LEASE APPLICATION ONLY - VOID FOR LOAN/CREDIT', this)">
+              🏠 For Rental Application Only
+            </button>
+            <button type="button" class="preset-pill" onclick="setWatermarkPreset('SAMPLE ONLY - NOT FOR OFFICIAL USE', this)">
+              ⚠️ Sample Only / Not for Official Use
+            </button>
+            <button type="button" class="preset-pill" onclick="setWatermarkPreset('FOR VISA / PASSPORT APPLICATION ONLY', this)">
+              ✈️ For Visa / Travel Application
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Watermark Text -->
+        <div>
+          <div class="control-group-title">
+            <span>Custom Watermark Text</span>
+          </div>
+          <input type="text" class="input-text" id="watermarkTextInput" value="FOR IDENTITY VERIFICATION ONLY - VOID FOR ANY OTHER PURPOSE" oninput="renderCanvas()">
+        </div>
+
+        <!-- Sliders -->
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Watermark Opacity</span>
+            <span id="opacityVal">25%</span>
+          </div>
+          <input type="range" id="opacitySlider" min="5" max="80" value="25" oninput="onOpacityChange(this.value)">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Watermark Density</span>
+            <span id="densityVal">Medium</span>
+          </div>
+          <input type="range" id="densitySlider" min="1" max="3" value="2" oninput="renderCanvas()">
+        </div>
+
+        <!-- Export -->
+        <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.8rem;">
+          <button type="button" class="btn-download-primary" onclick="downloadImage()">
+            Download Protected ID (PNG)
+          </button>
+          <button type="button" class="btn-copy-secondary" onclick="copyImage()">
+            Copy to Clipboard
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-powered">
+      Created & Powered by <a href="https://dopic.app" target="_blank" rel="noopener">Dopic.app</a> — Free Online AI Passport & Photo Studio Tools.
+    </div>
+  </footer>
+
+  <script>
+    let sourceImg = null;
+    let canvas = null;
+    let ctx = null;
+    let redactions = []; // { x, y, w, h, type }
+    let currentRedactType = 'black';
+    let isDrawing = false;
+    let startX = 0, startY = 0;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      canvas = document.getElementById('idCanvas');
+      ctx = canvas.getContext('2d');
+
+      const fileInput = document.getElementById('fileUpload');
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+      });
+
+      initDrawing();
+      loadDemoID();
+    });
+
+    function triggerUpload() {
+      const fileInput = document.getElementById('fileUpload');
+      fileInput.value = '';
+      fileInput.click();
+    }
+
+    function loadFile(file) {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          sourceImg = img;
+          redactions = [];
+          document.getElementById('dropzoneCard').style.display = 'none';
+          document.getElementById('workspaceLayout').style.display = 'grid';
+          renderCanvas();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function setRedactType(type) {
+      currentRedactType = type;
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      if (type === 'black') document.getElementById('btnToolBlack').classList.add('active');
+      if (type === 'mosaic') document.getElementById('btnToolMosaic').classList.add('active');
+      if (type === 'blur') document.getElementById('btnToolBlur').classList.add('active');
+    }
+
+    function setWatermarkPreset(text, btn) {
+      document.getElementById('watermarkTextInput').value = text;
+      document.querySelectorAll('.preset-pill-list .preset-pill').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderCanvas();
+    }
+
+    function onOpacityChange(val) {
+      document.getElementById('opacityVal').textContent = val + '%';
+      renderCanvas();
+    }
+
+    function initDrawing() {
+      const wrapper = document.getElementById('canvasWrapper');
+
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY
+        };
+      };
+
+      wrapper.addEventListener('mousedown', (e) => {
+        if (!sourceImg) return;
+        isDrawing = true;
+        const p = getPos(e);
+        startX = p.x;
+        startY = p.y;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const p = getPos(e);
+        renderCanvas();
+        // Draw live drag rectangle
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(startX, startY, p.x - startX, p.y - startY);
+        ctx.setLineDash([]);
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (!isDrawing) return;
+        isDrawing = false;
+        const p = getPos(e);
+        const w = p.x - startX;
+        const h = p.y - startY;
+        if (Math.abs(w) > 5 && Math.abs(h) > 5) {
+          redactions.push({
+            x: Math.min(startX, p.x),
+            y: Math.min(startY, p.y),
+            w: Math.abs(w),
+            h: Math.abs(h),
+            type: currentRedactType
+          });
+        }
+        renderCanvas();
+      });
+    }
+
+    function undoRedaction() {
+      if (redactions.length > 0) {
+        redactions.pop();
+        renderCanvas();
+      }
+    }
+
+    function clearRedactions() {
+      redactions = [];
+      renderCanvas();
+    }
+
+    function renderCanvas() {
+      if (!sourceImg) return;
+      canvas.width = sourceImg.width;
+      canvas.height = sourceImg.height;
+
+      // 1. Draw base image
+      ctx.drawImage(sourceImg, 0, 0);
+
+      // 2. Draw Redaction Masks
+      redactions.forEach(box => {
+        if (box.type === 'black') {
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(box.x, box.y, box.w, box.h);
+        } else if (box.type === 'mosaic') {
+          drawMosaic(box.x, box.y, box.w, box.h, 12);
+        } else if (box.type === 'blur') {
+          drawMosaic(box.x, box.y, box.w, box.h, 6);
+        }
+      });
+
+      // 3. Draw Repeating Security Watermark
+      const text = document.getElementById('watermarkTextInput').value.trim();
+      if (text) {
+        const opacity = parseInt(document.getElementById('opacitySlider').value, 10) / 100;
+        const density = parseInt(document.getElementById('densitySlider').value, 10);
+        
+        ctx.save();
+        ctx.fillStyle = `rgba(30, 41, 59, ${opacity})`;
+        ctx.font = 'bold 22px sans-serif';
+        ctx.textAlign = 'center';
+
+        const stepX = density === 1 ? 400 : (density === 2 ? 300 : 220);
+        const stepY = density === 1 ? 260 : (density === 2 ? 180 : 130);
+
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((-25 * Math.PI) / 180);
+
+        const diag = Math.sqrt(canvas.width ** 2 + canvas.height ** 2);
+        for (let x = -diag; x < diag; x += stepX) {
+          for (let y = -diag; y < diag; y += stepY) {
+            ctx.fillText(text, x, y);
+          }
+        }
+        ctx.restore();
+      }
+    }
+
+    function drawMosaic(x, y, w, h, blockSize) {
+      const imgData = ctx.getImageData(x, y, w, h);
+      const data = imgData.data;
+
+      for (let by = 0; by < h; by += blockSize) {
+        for (let bx = 0; bx < w; bx += blockSize) {
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let dy = 0; dy < blockSize && by + dy < h; dy++) {
+            for (let dx = 0; dx < blockSize && bx + dx < w; dx++) {
+              const idx = ((by + dy) * w + (bx + dx)) * 4;
+              r += data[idx];
+              g += data[idx + 1];
+              b += data[idx + 2];
+              count++;
+            }
+          }
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+
+          for (let dy = 0; dy < blockSize && by + dy < h; dy++) {
+            for (let dx = 0; dx < blockSize && bx + dx < w; dx++) {
+              const idx = ((by + dy) * w + (bx + dx)) * 4;
+              data[idx] = r;
+              data[idx + 1] = g;
+              data[idx + 2] = b;
+            }
+          }
+        }
+      }
+      ctx.putImageData(imgData, x, y);
+    }
+
+    function loadDemoID() {
+      const demoCanvas = document.createElement('canvas');
+      demoCanvas.width = 860;
+      demoCanvas.height = 540;
+      const dCtx = demoCanvas.getContext('2d');
+
+      // Card Background (Standard Credit Card / Driver License size)
+      const grad = dCtx.createLinearGradient(0, 0, 860, 540);
+      grad.addColorStop(0, '#e0f2fe');
+      grad.addColorStop(1, '#bae6fd');
+      dCtx.fillStyle = grad;
+      dCtx.fillRect(0, 0, 860, 540);
+
+      // Card Header
+      dCtx.fillStyle = '#0369a1';
+      dCtx.fillRect(0, 0, 860, 85);
+      dCtx.fillStyle = '#ffffff';
+      dCtx.font = 'bold 30px sans-serif';
+      dCtx.fillText('STATE DRIVER LICENSE / IDENTIFICATION', 40, 54);
+
+      // Avatar placeholder
+      dCtx.fillStyle = '#94a3b8';
+      dCtx.fillRect(50, 120, 200, 260);
+      dCtx.fillStyle = '#ffffff';
+      dCtx.font = '16px sans-serif';
+      dCtx.fillText('PHOTO', 120, 250);
+
+      // Fields
+      dCtx.fillStyle = '#0f172a';
+      dCtx.font = 'bold 22px sans-serif';
+      dCtx.fillText('NAME: JOHNATHAN DOE', 290, 150);
+      dCtx.fillText('LIC NO: D123-4567-8901', 290, 210);
+      dCtx.fillText('DOB: 1988-10-15', 290, 270);
+      dCtx.fillText('ADDR: 742 EVERGREEN TERRACE, NY', 290, 330);
+      dCtx.fillText('EXP: 2029-10-15', 290, 390);
+
+      const img = new Image();
+      img.onload = () => {
+        sourceImg = img;
+        redactions = [
+          { x: 285, y: 185, w: 320, h: 36, type: 'black' } // Default redacted license number
+        ];
+        document.getElementById('dropzoneCard').style.display = 'none';
+        document.getElementById('workspaceLayout').style.display = 'grid';
+        renderCanvas();
+      };
+      img.src = demoCanvas.toDataURL('image/jpeg', 0.95);
+    }
+
+    function downloadImage() {
+      if (!canvas) return;
+      const link = document.createElement('a');
+      link.download = `protected_id_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    async function copyImage() {
+      if (!canvas) return;
+      try {
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          alert('✓ Protected ID copied to clipboard! Ready to paste into chat or emails.');
+        }, 'image/png');
+      } catch (err) {
+        alert('Please use "Download Protected ID (PNG)".');
+      }
+    }
+  </script>
+</body>
+</html>
+
